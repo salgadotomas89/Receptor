@@ -12,7 +12,7 @@ import javax.crypto.Cipher;
 
 /**
  *
- * @author Tomas Salgado
+ * @author Tomas Salgado, Diego Riquelme
  */
 public class Receptor {
 
@@ -20,13 +20,13 @@ public class Receptor {
         File inFile       = new File("ArchivoSalida.txt");//archivo cifrado
         File keyStoreFile = new File("almacenDeLLaves.jks");//almacen de llaves
         String password   = ("seguridad123");//storepass
-
-        try{                        
-            byte [] encriptado = new byte[1000];
+        
+        try{                       
+            
+            byte [] encriptado = new byte[256];//tamaño de la llave aes encriptada en bytes
             FileInputStream input = new FileInputStream(inFile);
             input.read(encriptado);
             input.close();
-
             //Carga el keystore
             KeyStore myKeyStore = KeyStore.getInstance("JKS");
             FileInputStream inStream = new FileInputStream(keyStoreFile);
@@ -36,13 +36,10 @@ public class Receptor {
             PublicKey publicKey = cert.getPublicKey();
             @SuppressWarnings("unused")
             PrivateKey privatekey = (PrivateKey) myKeyStore.getKey("millave", "123456789".toCharArray()); 
-            Cipher rsa = Cipher.getInstance("RSA");
             // Se desencripta
+            Cipher rsa = Cipher.getInstance("RSA");
             rsa.init(Cipher.DECRYPT_MODE, privatekey);//incializamos el objeto rsa
-            System.out.println("hastA aqui se ejecuta bien");
-            byte[] bytesDesencriptados = rsa.doFinal(encriptado);
-            
-
+            byte[] bytesDesencriptados = rsa.doFinal(encriptado);            
             String textoDesencripado = new String(bytesDesencriptados);
             System.out.println("key desencriptada:"+textoDesencripado);
            
