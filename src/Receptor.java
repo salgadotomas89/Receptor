@@ -20,10 +20,11 @@ public class Receptor {
         File inFile       = new File("ArchivoSalida.txt");//archivo cifrado
         File keyStoreFile = new File("almacenDeLLaves.jks");//almacen de llaves
         String password   = ("seguridad123");//storepass
-        
+        float tamaño;
         try{                       
-            
-            byte [] encriptado = new byte[256];//tamaño de la llave aes encriptada en bytes
+            tamaño=inFile.length();
+            System.out.println("tamaño del archivo:"+tamaño);
+            byte [] encriptado = new byte[512];//tamaño de la llave aes encriptada en bytes
             FileInputStream input = new FileInputStream(inFile);
             input.read(encriptado);
             input.close();
@@ -36,13 +37,26 @@ public class Receptor {
             PublicKey publicKey = cert.getPublicKey();
             @SuppressWarnings("unused")
             PrivateKey privatekey = (PrivateKey) myKeyStore.getKey("millave", "123456789".toCharArray()); 
-            // Se desencripta
+            // leemos los primeros 256 bytes pertenecientes a la llave Aes encriptada
+            byte[] AEs= new byte[256];            
+            for(int i=0;i<256;i++){                
+                  AEs[i]=encriptado[i];                               
+            }
             Cipher rsa = Cipher.getInstance("RSA");
             rsa.init(Cipher.DECRYPT_MODE, privatekey);//incializamos el objeto rsa
-            byte[] bytesDesencriptados = rsa.doFinal(encriptado);            
-            String textoDesencripado = new String(bytesDesencriptados);
-            System.out.println("key desencriptada:"+textoDesencripado);
-           
+            byte[] bytesDesencriptados = rsa.doFinal(AEs);            
+            String AesDesencriptada = new String(bytesDesencriptados);
+            System.out.println("key desencriptada:"+AesDesencriptada);
+            //hasta aqui funciona bien
+            byte[] Hash= new byte[256];
+            int h=0;
+            for(int i=256;i<512;i++){                
+                  Hash[h++]=encriptado[i];                               
+            }
+            Cipher cifradorRsaHash = Cipher.getInstance("RSA");
+            cifradorRsaHash.init(Cipher.ENCRYPT_MODE, publicKey);
+            byte[] HashDesencriptado = cifradorRsaHash.doFinal(Hash);
+            System.out.println("holitas");
 
             
     
