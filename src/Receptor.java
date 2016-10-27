@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.security.Key;
 import java.security.KeyStore;
+import java.security.MessageDigest;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
@@ -21,16 +22,16 @@ public class Receptor {
     public static void main(String[] args) throws FileNotFoundException{
         File inFile       = new File("ArchivoSalida.txt");//archivo cifrado
         File keyStoreFile = new File("almacenDeLLaves.jks");//almacen de llaves
-        String password   = ("seguridad123");//storepass
-        float tamaño;
-        try{                       
-            tamaño=inFile.length();
-            int tamañoInt = (int)Math.round(tamaño); 
-            System.out.println("tamaño del archivo:"+tamañoInt);
-            byte [] encriptado = new byte[tamañoInt];//tamaño de la llave aes encriptada en bytes
+        String password   = ("seguridad123");//storepass        
+        int bytesTotalesArcchivo;
+        try{                                               
             FileInputStream input = new FileInputStream(inFile);
+            bytesTotalesArcchivo = input.available();//metodo que devuelve el total de bytes que hay
+            byte [] encriptado = new byte[bytesTotalesArcchivo];//tamaño de la llave aes encriptada en bytes            
             input.read(encriptado);
             input.close();
+            System.out.println("tamaño2"+bytesTotalesArcchivo);
+            
             ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             //Carga el keystore
             KeyStore myKeyStore = KeyStore.getInstance("JKS");
@@ -48,7 +49,7 @@ public class Receptor {
             }
             Cipher rsa = Cipher.getInstance("RSA");
             rsa.init(Cipher.DECRYPT_MODE, privatekey);//incializamos el objeto rsa
-            byte[] bytesDesencriptados = rsa.doFinal(AEs);                        
+            byte[] llaveAesDesencriptada = rsa.doFinal(AEs);                        
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
             byte[] HashEncriptado= new byte[256];
             int h=0;
@@ -59,20 +60,32 @@ public class Receptor {
             Cipher cifradorRsaHash = Cipher.getInstance("RSA");
             cifradorRsaHash.init(Cipher.DECRYPT_MODE, publicKey);
             byte[] HashDesencriptado = cifradorRsaHash.doFinal(HashEncriptado);
-            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            int faltaPorLeer=tamañoInt-512;
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////            
+            int faltaPorLeer=bytesTotalesArcchivo-512;
             byte[] TextoEncriptado= new byte[faltaPorLeer];
             int t=0;
-            for(int i=512;i<tamañoInt;i++){                
+            for(int i=512;i<bytesTotalesArcchivo;i++){                
                   TextoEncriptado[t++]=encriptado[i];                               
                   
             }
             Cipher aes = Cipher.getInstance("AES/ECB/PKCS5Padding");
-            Key alKey = new SecretKeySpec(bytesDesencriptados, 0, bytesDesencriptados.length, "AES"); 
+            Key alKey = new SecretKeySpec(llaveAesDesencriptada, 0, llaveAesDesencriptada.length, "AES"); 
             aes.init(Cipher.DECRYPT_MODE,alKey);
             byte[] TextoDesencriptado = aes.doFinal(TextoEncriptado);
             // Texto obtenido, igual al original.
             System.out.println("Texto desencriptado:"+new String(TextoDesencriptado));
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //calculamos el hash del texto desencriptado
+            MessageDigest md = MessageDigest.getInstance( "MD5" );
+            md.update(TextoDesencriptado);
+            byte[] digest = md.digest();
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            //comparamos el hash desencriptado con el hash del texto extraido
+            if(HashDesencriptado==digest){
+                System.out.println("Firma digital es valida");
+            }else{
+                System.out.println("Firma digital no es valida");
+            }
             
     
         }catch(Exception e){
