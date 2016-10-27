@@ -25,8 +25,9 @@ public class Receptor {
         float tamaño;
         try{                       
             tamaño=inFile.length();
-            System.out.println("tamaño del archivo:"+tamaño);
-            byte [] encriptado = new byte[528];//tamaño de la llave aes encriptada en bytes
+            int tamañoInt = (int)Math.round(tamaño); 
+            System.out.println("tamaño del archivo:"+tamañoInt);
+            byte [] encriptado = new byte[tamañoInt];//tamaño de la llave aes encriptada en bytes
             FileInputStream input = new FileInputStream(inFile);
             input.read(encriptado);
             input.close();
@@ -59,9 +60,10 @@ public class Receptor {
             cifradorRsaHash.init(Cipher.DECRYPT_MODE, publicKey);
             byte[] HashDesencriptado = cifradorRsaHash.doFinal(HashEncriptado);
             ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-            byte[] TextoEncriptado= new byte[16];
+            int faltaPorLeer=tamañoInt-512;
+            byte[] TextoEncriptado= new byte[faltaPorLeer];
             int t=0;
-            for(int i=512;i<528;i++){                
+            for(int i=512;i<tamañoInt;i++){                
                   TextoEncriptado[t++]=encriptado[i];                               
                   
             }
